@@ -4,28 +4,46 @@ import 'package:convert/convert.dart';
 
 import 'const.dart';
 
+/// Initial key given to expansion algorithm is not of correct size.
 class KeyLengthException implements Exception {
-  String toString() => 'Key is of invalid length.';
+  final int _required_length;
+  final int _given_length;
+
+  KeyLengthException(this._given_length, this._required_length);
+
+  String toString() =>
+      'Key is of invalid length. Got $_given_length bytes, require $_required_length bytes.';
 }
 
+/// Requested round key does not exist.
 class KeyRoundException implements Exception {
-  String toString() => 'Invalid round for round key requested.';
+  final int _requested_round;
+
+  KeyRoundException(this._requested_round);
+
+  String toString() => 'Round key for $_requested_round does not exist.';
 }
 
+/// Object that handles round keys for AES 128.
+///
+/// Key object is constructed form single 128 bit key
+/// on which key expansion is performed to generate a key schedule.
 class Key {
   // Final expended key.
   Uint8List _expanded_key;
 
+  /// Constructs key with specified [initial_key] key.
+  ///
+  /// [initial_key] should be 16 bytes long.
   Key(Uint8List initial_key) {
     _expand_key(initial_key);
   }
 
-  // Expands the initial key to satisfy the length
-  // needed for _rounds rounds.
+  /// Performs a key expansion routine to generate a key schedule.
   void _expand_key(Uint8List initial_key) {
     // Check that the size of the initial key is correct.
     if (initial_key.length != 4 * Nk) {
-      throw KeyLengthException();
+      throw KeyLengthException(initial_key.length, 4 * Nk);
     }
 
     // Initialize expanded key with correct size.
@@ -39,11 +57,11 @@ class Key {
       }
     }
 
-    // Temporary buffer that one word in size.
+    // Temporary buffer that holds the last word in key.
     var temp = Uint8List(4);
 
-    // Go through all expantions. Each expantion lengthens the key
-    // for one word. There are Nb words in each round key.
+    // Perform expansion routine. Key schedule has ROUND + 1
+    // round keys, each round key is Nb word long.
     for (int i = Nk; i < Nb * (ROUNDS + 1); ++i) {
       // Copy the previous word into temp.
       for (int j = 0; j < 4; ++j) {
@@ -51,10 +69,11 @@ class Key {
       }
 
       if (i % Nk == 0) {
+        // Execute temp = SubWord(RotWord(temp)) xor Rcon[i/Nk]
+
         _rot_word(temp);
         _sub_word(temp);
 
-        // XOR word with Rcon[i];
         temp[0] ^= rcon[i ~/ Nk];
       }
 
@@ -65,7 +84,7 @@ class Key {
     }
   }
 
-  // Rotate word, that is circle shift one to the left.
+  /// Rotate word [word], that is circle shift one to the left.
   void _rot_word(Uint8List word) {
     int tmp = word[0];
 
@@ -76,24 +95,33 @@ class Key {
     word[word.length - 1] = tmp;
   }
 
-  // Apply S-box to the word.
+  /// Apply S-box to the word [word].
   void _sub_word(Uint8List word) {
     for (int i = 0; i < word.length; ++i) {
       word[i] = sbox[word[i]];
     }
   }
 
-  // Converts class to string for easier printing.
   String toString() {
     return hex.encode(_expanded_key);
   }
 
+  /// Gets round key for specified [round].
+  ///
+  /// Round key is 4 words (16 bytes) long key, that starts at
+  /// word `round * Nb` and ends at word `(round + 1) * Nb`. Since expanded
+  /// key is stored as array of bytes, round key starts at byte `round * Nb * 4`
+  /// and ends at byte `(round + 1) * Nb * 4`.
   Uint8List round_key(int round) {
+    // Check that the specified round is valid.
     if (round < 0 || round > ROUNDS) {
-      throw KeyRoundException();
+      throw KeyRoundException(round);
     }
 
+    // Initialize array representing round key of size 16 bytes.
     var key = Uint8List(Nb * 4);
+
+    // Copy correct round key to key array.
     for (int i = 0; i < Nb * 4; ++i) {
       key[i] = _expanded_key[round * (Nb * 4) + i];
     }

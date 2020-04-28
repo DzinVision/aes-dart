@@ -3,19 +3,34 @@ import 'dart:typed_data';
 import 'const.dart';
 import 'key.dart';
 
+/// Exception returned when AES input was not of correct length.
 class AESInputLengthException implements Exception {
-  String toString() => 'AES input of incorrect length.';
+  final int _required_length;
+  final int _given_length;
+
+  AESInputLengthException(this._given_length, this._required_length);
+
+  String toString() =>
+      'AES input of incorrect length. Got $_given_length bytes, require $_required_length bytes.';
 }
 
+/// Internal class representing AES state.
 class _State {
+  // A state is represented by 4x4 matrix.
   List<Uint8List> _state;
 
+  // Initializes state with data. Data should be 16 bytes long.
+  // The constructor does not check if data is of correct length,
+  // since state is only constructed in AES class which checks the
+  // data length.
   _State(Uint8List data) {
+    // Create 4x4 state matrix.
     _state = List<Uint8List>(4);
     for (int i = 0; i < 4; ++i) {
       _state[i] = Uint8List(4);
     }
 
+    // Copy data to state matrix.
     for (int i = 0; i < 4; ++i) {
       for (int j = 0; j < 4; ++j) {
         _state[j][i] = data[4 * i + j];
@@ -23,6 +38,7 @@ class _State {
     }
   }
 
+  /// Adds (XORs) round key [round_key] to current state.
   void add_round_key(Uint8List round_key) {
     for (int i = 0; i < 4; ++i) {
       for (int j = 0; j < 4; ++j) {
@@ -31,6 +47,7 @@ class _State {
     }
   }
 
+  /// Substitutes bytes in current state with help of sbox.
   void sub_bytes() {
     for (int i = 0; i < 4; ++i) {
       for (int j = 0; j < 4; ++j) {
@@ -39,8 +56,15 @@ class _State {
     }
   }
 
+  /// Shifts rows to the left as specified in AES standard.
+  ///
+  /// Row 0 is not shifted.
+  /// Row 1 is shifted one to the left.
+  /// Row 2 is shifted two to the left.
+  /// Row 3 is shifted three to the left.
   void shift_rows() {
     for (int row = 0; row < 4; ++row) {
+      // Shift the row indexOfRow-times.
       for (int j = 0; j < row; ++j) {
         int tmp = _state[row][0];
 
@@ -53,10 +77,13 @@ class _State {
     }
   }
 
+  /// Helper function that multiplies element p from GF(2^8) with
+  /// element X from GF(2^8).
   int _xtime(int p) {
     return ((p << 1) & ((1 << 8) - 1)) ^ (((p >> 7) & 1) * 0x1b);
   }
 
+  /// Multiplies elements p, q from GF(2^8).
   int _multiply(int p, int q) {
     int r = 0x00;
     int s = p;
@@ -72,6 +99,7 @@ class _State {
     return r;
   }
 
+  /// Multiplies each column with a matrix specified in AES standard.
   void mix_columns() {
     for (int col = 0; col < 4; ++col) {
       int a = _state[0][col];
@@ -86,8 +114,12 @@ class _State {
     }
   }
 
+  /// Inverse of shift rows operation.
+  ///
+  /// Shifts rows to the right, to inverse the shift_rows operation.
   void inv_shift_rows() {
     for (int row = 0; row < 4; ++row) {
+      // Shift row indexOfRow-times.
       for (int j = 0; j < row; ++j) {
         int tmp = _state[row][3];
 
@@ -100,6 +132,9 @@ class _State {
     }
   }
 
+  /// Inverse of sub_bytes operation.
+  ///
+  /// Substitutes bytes with the help of rsbox which is the inverse of sbox.
   void inv_sub_bytes() {
     for (int i = 0; i < 4; ++i) {
       for (int j = 0; j < 4; ++j) {
@@ -108,6 +143,9 @@ class _State {
     }
   }
 
+  /// Inverse of mix_columns operation.
+  ///
+  /// Multiplies each column with inverse matrix specified in AES standard.
   void inv_mix_columns() {
     for (int col = 0; col < 4; ++col) {
       int a = _state[0][col];
@@ -134,6 +172,7 @@ class _State {
     }
   }
 
+  /// Converts 4x4 state matrix to 16 bytes array.
   Uint8List to_out() {
     var out = Uint8List(4 * Nb);
     for (int i = 0; i < 4; ++i) {
@@ -163,19 +202,37 @@ class _State {
   }
 }
 
-class AES {
+/// Abstract class representing a block cipher.
+/// Constructor of block cipher should take key as parameter.
+abstract class BlockCipher {
+  /// Encrypts [input] plain text and returns ciphered data.
+  Uint8List encrypt(Uint8List input);
+
+  /// Decrypts [input] cipher text and returns plain text data.
+  Uint8List decrypt(Uint8List input);
+}
+
+/// Implementation of AES 128 block cipher.
+class AES implements BlockCipher {
   final Key _key;
 
+  /// Constructor takes key that is used for encryption and decryption.
   AES(this._key);
 
+  /// Encrypts [input] plain text using AES128 and returns ciphered data.
+  ///
+  /// [input] should be 16 bytes in size, since that is AES block size.
   Uint8List encrypt(Uint8List input) {
+    // Check that the input is of correct size.
     if (input.length != 4 * Nb) {
-      throw AESInputLengthException();
+      throw AESInputLengthException(input.length, 4 * Nb);
     }
 
+    // Initialize state and add round key.
     var state = _State(input);
     state.add_round_key(_key.round_key(0));
 
+    // Execute ROUNDS - 1 normal rounds.
     for (int round = 1; round < ROUNDS; ++round) {
       state.sub_bytes();
       state.shift_rows();
@@ -183,21 +240,29 @@ class AES {
       state.add_round_key(_key.round_key(round));
     }
 
+    // Execute last round, which is different than the first ROUNDS - 1.
     state.sub_bytes();
     state.shift_rows();
     state.add_round_key(_key.round_key(ROUNDS));
 
+    // Return bytes output.
     return state.to_out();
   }
 
+  /// Decrypts [input] cipher text using AES128 and returns plain text data.
+  ///
+  /// [input] should be 16 bytes in size, since that is AES block size.
   Uint8List decrypt(Uint8List input) {
+    // Check that the input is of correct size.
     if (input.length != 4 * Nb) {
-      throw AESInputLengthException();
+      throw AESInputLengthException(input.length, 4 * Nb);
     }
 
+    // Initialize state and add round key.
     var state = _State(input);
     state.add_round_key(_key.round_key(ROUNDS));
 
+    // Execute ROUNDS - 1 normal decryption rounds.
     for (int round = ROUNDS - 1; round > 0; --round) {
       state.inv_shift_rows();
       state.inv_sub_bytes();
@@ -205,10 +270,12 @@ class AES {
       state.inv_mix_columns();
     }
 
+    // Execute last round, which is different that the first ROUNDS - 1.
     state.inv_shift_rows();
     state.inv_sub_bytes();
     state.add_round_key(_key.round_key(0));
 
+    // Return bytes output.
     return state.to_out();
   }
 }
