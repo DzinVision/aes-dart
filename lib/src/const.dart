@@ -1,5 +1,13 @@
 import 'dart:typed_data';
 
+// Number of words in key. For AES 128 there are 4 words in a key.
+const int Nk = 4;
+
+// Number of columns comprising a state in AES. This is constant of 4.
+const int Nb = 4;
+
+// Number of rounds of expantion. For AES-128 this is 10.
+const ROUNDS = 10;
 
 var sbox =  Uint8List.fromList([
 //0     1    2      3     4    5     6     7      8    9     A      B    C     D     E     F
