@@ -8,3 +8,5 @@ environment:
 dependencies:
     convert: ^2.1.1
 
+dev_dependencies:
+    test: ^1.14.2

@@ -101,11 +101,3 @@ class Key {
     return key;
   }
 }
-
-main() {
-  var kBytes =
-      Uint8List.fromList(hex.decode('2b7e151628aed2a6abf7158809cf4f3c'));
-
-  var k = Key(kBytes);
-  print(k);
-}

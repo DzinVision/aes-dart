@@ -1,7 +1,5 @@
 import 'dart:typed_data';
 
-import 'package:convert/convert.dart';
-
 import 'const.dart';
 import 'key.dart';
 
@@ -213,27 +211,4 @@ class AES {
 
     return state.to_out();
   }
-}
-
-main() {
-  var kBytes =
-      Uint8List.fromList(hex.decode('000102030405060708090a0b0c0d0e0f'));
-  var key = Key(kBytes);
-
-  var aes = AES(key);
-
-  var input =
-      Uint8List.fromList(hex.decode('00112233445566778899aabbccddeeff'));
-
-  print('test encryption');
-  var encrypted = aes.encrypt(input);
-  print(hex.encode(encrypted));
-  var expected_out = '69c4e0d86a7b0430d8cdb78070b4c55a';
-  print(hex.encode(encrypted) == expected_out);
-
-  print('\ntest decryption');
-  var decrypted = aes.decrypt(encrypted);
-  print(hex.encode(decrypted));
-  expected_out = '00112233445566778899aabbccddeeff';
-  print(hex.encode(decrypted) == expected_out);
 }
