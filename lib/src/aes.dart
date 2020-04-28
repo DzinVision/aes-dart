@@ -88,6 +88,54 @@ class _State {
     }
   }
 
+  void inv_shift_rows() {
+    for (int row = 0; row < 4; ++row) {
+      for (int j = 0; j < row; ++j) {
+        int tmp = _state[row][3];
+
+        for (int i = 3; i > 0; --i) {
+          _state[row][i] = _state[row][i - 1];
+        }
+
+        _state[row][0] = tmp;
+      }
+    }
+  }
+
+  void inv_sub_bytes() {
+    for (int i = 0; i < 4; ++i) {
+      for (int j = 0; j < 4; ++j) {
+        _state[i][j] = rsbox[_state[i][j]];
+      }
+    }
+  }
+
+  void inv_mix_columns() {
+    for (int col = 0; col < 4; ++col) {
+      int a = _state[0][col];
+      int b = _state[1][col];
+      int c = _state[2][col];
+      int d = _state[3][col];
+
+      _state[0][col] = _multiply(0x0e, a) ^
+          _multiply(0x0b, b) ^
+          _multiply(0x0d, c) ^
+          _multiply(0x09, d);
+      _state[1][col] = _multiply(0x09, a) ^
+          _multiply(0x0e, b) ^
+          _multiply(0x0b, c) ^
+          _multiply(0x0d, d);
+      _state[2][col] = _multiply(0x0d, a) ^
+          _multiply(0x09, b) ^
+          _multiply(0x0e, c) ^
+          _multiply(0x0b, d);
+      _state[3][col] = _multiply(0x0b, a) ^
+          _multiply(0x0d, b) ^
+          _multiply(0x09, c) ^
+          _multiply(0x0e, d);
+    }
+  }
+
   Uint8List to_out() {
     var out = Uint8List(4 * Nb);
     for (int i = 0; i < 4; ++i) {
@@ -144,9 +192,27 @@ class AES {
     return state.to_out();
   }
 
-//  Uint8List decrypt() {
-//
-//  }
+  Uint8List decrypt(Uint8List input) {
+    if (input.length != 4 * Nb) {
+      throw AESInputLengthException();
+    }
+
+    var state = _State(input);
+    state.add_round_key(_key.round_key(ROUNDS));
+
+    for (int round = ROUNDS - 1; round > 0; --round) {
+      state.inv_shift_rows();
+      state.inv_sub_bytes();
+      state.add_round_key(_key.round_key(round));
+      state.inv_mix_columns();
+    }
+
+    state.inv_shift_rows();
+    state.inv_sub_bytes();
+    state.add_round_key(_key.round_key(0));
+
+    return state.to_out();
+  }
 }
 
 main() {
@@ -159,8 +225,15 @@ main() {
   var input =
       Uint8List.fromList(hex.decode('00112233445566778899aabbccddeeff'));
 
+  print('test encryption');
   var encrypted = aes.encrypt(input);
   print(hex.encode(encrypted));
   var expected_out = '69c4e0d86a7b0430d8cdb78070b4c55a';
   print(hex.encode(encrypted) == expected_out);
+
+  print('\ntest decryption');
+  var decrypted = aes.decrypt(encrypted);
+  print(hex.encode(decrypted));
+  expected_out = '00112233445566778899aabbccddeeff';
+  print(hex.encode(decrypted) == expected_out);
 }
