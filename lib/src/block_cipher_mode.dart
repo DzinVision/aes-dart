@@ -33,6 +33,20 @@ abstract class BlockCipherMode {
 ///
 /// ECB block mode is the least secure of all and should not be used.
 /// It encrypts each block individually.
+///
+/// The following example uses ECB with AES to encrypt 64 bytes long
+/// list of zeros with key of zeros.
+/// ```dart
+/// // Initialize key, aes and ecb objects.
+/// var key = Key(Uint8List(16));
+/// var aes = AES(key);
+/// var ecb = ECB(aes);
+///
+/// // Encrypt data and decrypt encrypted data.
+/// var data = Uint8List(64);
+/// var encrypted = ecb.encrypt(data);
+/// var decrypted = ecb.decrypt(encrypted);
+/// ```
 class ECB implements BlockCipherMode {
   final BlockCipher _cipher;
 

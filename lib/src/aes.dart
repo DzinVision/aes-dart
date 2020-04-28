@@ -231,10 +231,10 @@ abstract class BlockCipher {
 /// var key = Key(Uint8List(16));
 /// var aes = AES(key);
 ///
-/// // Encrypt data, and decrypt encrypted data.
+/// // Encrypt data and decrypt encrypted data.
 /// var data = Uint8List(16);
 /// var encrypted = aes.encrypt(data);
-/// var decrypted = aes.decrypted(encrypted);
+/// var decrypted = aes.decrypt(encrypted);
 /// ```
 class AES implements BlockCipher {
   final Key _key;
