@@ -205,23 +205,55 @@ class _State {
 /// Abstract class representing a block cipher.
 /// Constructor of block cipher should take key as parameter.
 abstract class BlockCipher {
-  /// Encrypts [input] plain text and returns ciphered data.
+  /// Encrypts a single block of [input] plain text and returns ciphered data.
+  ///
+  /// [input] must be the same length as block size of the cipher.
   Uint8List encrypt(Uint8List input);
 
-  /// Decrypts [input] cipher text and returns plain text data.
+  /// Decrypts a single block [input] cipher text and returns plain text data.
+  ///
+  /// Input must be the same length as block size of the cipher.
   Uint8List decrypt(Uint8List input);
+
+  /// Returns cipher's block size in bytes.
+  int get block_size;
 }
 
 /// Implementation of AES 128 block cipher.
+///
+/// Object is constructed with a 16 byte long key used for encryption and
+/// decryption. After initializing the object with a key, you can call
+/// its encrypt and decrypt methods to encrypt or decrypt a single
+/// 16 byte long block of data.
+///
+/// ```dart
+/// // Initialize key and aes object.
+/// var key = Key(Uint8List(16));
+/// var aes = AES(key);
+///
+/// // Encrypt data, and decrypt encrypted data.
+/// var data = Uint8List(16);
+/// var encrypted = aes.encrypt(data);
+/// var decrypted = aes.decrypted(encrypted);
+/// ```
 class AES implements BlockCipher {
   final Key _key;
 
   /// Constructor takes key that is used for encryption and decryption.
   AES(this._key);
 
-  /// Encrypts [input] plain text using AES128 and returns ciphered data.
+  @override
+  int get block_size {
+    // A single AES block contains 4 words, each word is 4 bytes.
+    return 4 * Nb;
+  }
+
+  /// Encrypts [input] plain text using AES 128 and returns ciphered data.
   ///
-  /// [input] should be 16 bytes in size, since that is AES block size.
+  /// [input] must be 16 bytes long, since that is AES block size.
+  /// Returned list is 16 bytes long.
+  /// Throws [AESInputLengthException] if [input] is not of correct length.
+  @override
   Uint8List encrypt(Uint8List input) {
     // Check that the input is of correct size.
     if (input.length != 4 * Nb) {
@@ -251,7 +283,10 @@ class AES implements BlockCipher {
 
   /// Decrypts [input] cipher text using AES128 and returns plain text data.
   ///
-  /// [input] should be 16 bytes in size, since that is AES block size.
+  /// [input] must be 16 bytes long, since that is AES block size.
+  /// Returned list is 16 bytes long.
+  /// Throws [AESInputLengthException] if [input] is not of correct length.
+  @override
   Uint8List decrypt(Uint8List input) {
     // Check that the input is of correct size.
     if (input.length != 4 * Nb) {

@@ -27,19 +27,26 @@ class KeyRoundException implements Exception {
 /// Object that handles round keys for AES 128.
 ///
 /// Key object is constructed form single 128 bit key
-/// on which key expansion is performed to generate a key schedule.
+/// on which key expansion is performed to generate a key schedule use by AES 128.
+///
+/// Example of creating an AES key from list of zeros.
+/// ```dart
+/// var key = Key(Uint8List(16));
+/// ```
 class Key {
   // Final expended key.
   Uint8List _expanded_key;
 
   /// Constructs key with specified [initial_key] key.
   ///
-  /// [initial_key] should be 16 bytes long.
+  /// [initial_key] must 16 bytes long, otherwise [KeyLengthException] is thrown.
   Key(Uint8List initial_key) {
     _expand_key(initial_key);
   }
 
   /// Performs a key expansion routine to generate a key schedule.
+  ///
+  /// Throws a [KeyLengthException] if length of the [initial_key] is incorrect.
   void _expand_key(Uint8List initial_key) {
     // Check that the size of the initial key is correct.
     if (initial_key.length != 4 * Nk) {
@@ -106,7 +113,9 @@ class Key {
     return hex.encode(_expanded_key);
   }
 
-  /// Gets round key for specified [round].
+  /// Returns round key for specified [round].
+  ///
+  /// Throws a [KeyRoundException] if requested [round] is not valid.
   ///
   /// Round key is 4 words (16 bytes) long key, that starts at
   /// word `round * Nb` and ends at word `(round + 1) * Nb`. Since expanded
