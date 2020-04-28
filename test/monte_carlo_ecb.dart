@@ -1,4 +1,4 @@
-List<Map<String, String>> encryption_monte_carlo = [
+List<Map<String, String>> encryption_monte_carlo_ecb = [
   {
     'key': '139a35422f1d61de3c91787fe0507afd',
     'input': 'b9145a768b7dc489a096b546f43b231f',
@@ -501,7 +501,7 @@ List<Map<String, String>> encryption_monte_carlo = [
   }
 ];
 
-List<Map<String, String>> decryption_monte_carlo = [
+List<Map<String, String>> decryption_monte_carlo_ecb = [
   {
     'key': '0c60e7bf20ada9baa9e1ddf0d1540726',
     'input': 'b08a29b11a500ea3aca42c36675b9785',
