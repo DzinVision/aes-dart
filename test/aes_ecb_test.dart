@@ -6,45 +6,16 @@ import 'package:test/test.dart';
 
 import 'known_answers_ecb.dart';
 import 'monte_carlo_ecb.dart';
+import 'multiblock_message_ecb.dart';
 
 main() {
-  group('AES invalid inputs', () {
-    test('empty input', () {
+  group('ECB invalid inputs', () {
+    test('invalid length', () {
       var key = Key(Uint8List(16));
       var aes = AES(key);
-      expect(() => aes.encrypt(Uint8List(0)), throwsException);
-    });
+      var ecb = ECB(aes);
 
-    test('invalid length (too short)', () {
-      var key = Key(Uint8List(16));
-      var aes = AES(key);
-      expect(() => aes.encrypt(Uint8List(15)), throwsException);
-    });
-
-    test('invalid length (too long)', () {
-      var key = Key(Uint8List(16));
-      var aes = AES(key);
-      expect(() => aes.encrypt(Uint8List(123)), throwsException);
-    });
-  });
-
-  group('AES example in FIPS 197 document', () {
-    var key =
-        Key(Uint8List.fromList(hex.decode('000102030405060708090a0b0c0d0e0f')));
-    var aes = AES(key);
-
-    test('encryption', () {
-      var plaintext =
-          Uint8List.fromList(hex.decode('00112233445566778899aabbccddeeff'));
-      var encrypted = aes.encrypt(plaintext);
-      expect(hex.encode(encrypted), '69c4e0d86a7b0430d8cdb78070b4c55a');
-    });
-
-    test('decryption', () {
-      var ciphertext =
-          Uint8List.fromList(hex.decode('69c4e0d86a7b0430d8cdb78070b4c55a'));
-      var decrypted = aes.decrypt(ciphertext);
-      expect(hex.encode(decrypted), '00112233445566778899aabbccddeeff');
+      expect(() => ecb.encrypt(Uint8List(123)), throwsException);
     });
   });
 
@@ -52,17 +23,18 @@ main() {
   // https://csrc.nist.gov/CSRC/media/Projects/Cryptographic-Algorithm-Validation-Program/documents/aes/AESAVS.pdf
   // Test vectors from NIST:
   // https://csrc.nist.gov/projects/cryptographic-algorithm-validation-program/block-ciphers#AES
-  group('AES monte carlo', () {
+  group('AES ECB monte carlo', () {
     group('Encryption', () {
       for (int i = 0; i < encryption_monte_carlo_ecb.length; ++i) {
         var example = encryption_monte_carlo_ecb[i];
 
         var key = Key(Uint8List.fromList(hex.decode(example['key'])));
         var aes = AES(key);
+        var ecb = ECB(aes);
 
         var data = Uint8List.fromList(hex.decode(example['input']));
         for (int j = 0; j < 1000; ++j) {
-          data = aes.encrypt(data);
+          data = ecb.encrypt(data);
         }
 
         test('Encryption $i', () {
@@ -77,10 +49,11 @@ main() {
 
         var key = Key(Uint8List.fromList(hex.decode(example['key'])));
         var aes = AES(key);
+        var ecb = ECB(aes);
 
         var data = Uint8List.fromList(hex.decode(example['input']));
         for (int j = 0; j < 1000; ++j) {
-          data = aes.decrypt(data);
+          data = ecb.decrypt(data);
         }
 
         test('Decryption $i', () {
@@ -93,7 +66,7 @@ main() {
   // Known answers test for ECB. The test is specified in the same
   // document as the previous test and test vectors can be acquired.
   // at the same URL  as the previous test.
-  group('AES known answers', () {
+  group('AES ECB known answers', () {
     group('GFSbox', () {
       group('Encryption', () {
         for (int i = 0; i < encryption_kat_ecb_gfsbox.length; ++i) {
@@ -101,9 +74,10 @@ main() {
 
           var key = Key(Uint8List.fromList(hex.decode(example['key'])));
           var aes = AES(key);
+          var ecb = ECB(aes);
 
           var input = Uint8List.fromList(hex.decode(example['input']));
-          var output = aes.encrypt(input);
+          var output = ecb.encrypt(input);
 
           test('Encryption $i', () {
             expect(hex.encode(output), example['output']);
@@ -117,9 +91,10 @@ main() {
 
           var key = Key(Uint8List.fromList(hex.decode(example['key'])));
           var aes = AES(key);
+          var ecb = ECB(aes);
 
           var input = Uint8List.fromList(hex.decode(example['input']));
-          var output = aes.decrypt(input);
+          var output = ecb.decrypt(input);
 
           test('Decryption $i', () {
             expect(hex.encode(output), example['output']);
@@ -135,9 +110,10 @@ main() {
 
           var key = Key(Uint8List.fromList(hex.decode(example['key'])));
           var aes = AES(key);
+          var ecb = ECB(aes);
 
           var input = Uint8List.fromList(hex.decode(example['input']));
-          var output = aes.encrypt(input);
+          var output = ecb.encrypt(input);
 
           test('Encryption $i', () {
             expect(hex.encode(output), example['output']);
@@ -151,9 +127,10 @@ main() {
 
           var key = Key(Uint8List.fromList(hex.decode(example['key'])));
           var aes = AES(key);
+          var ecb = ECB(aes);
 
           var input = Uint8List.fromList(hex.decode(example['input']));
-          var output = aes.decrypt(input);
+          var output = ecb.decrypt(input);
 
           test('Decryption $i', () {
             expect(hex.encode(output), example['output']);
@@ -169,9 +146,10 @@ main() {
 
           var key = Key(Uint8List.fromList(hex.decode(example['key'])));
           var aes = AES(key);
+          var ecb = ECB(aes);
 
           var input = Uint8List.fromList(hex.decode(example['input']));
-          var output = aes.encrypt(input);
+          var output = ecb.encrypt(input);
 
           test('Encryption $i', () {
             expect(hex.encode(output), example['output']);
@@ -185,9 +163,10 @@ main() {
 
           var key = Key(Uint8List.fromList(hex.decode(example['key'])));
           var aes = AES(key);
+          var ecb = ECB(aes);
 
           var input = Uint8List.fromList(hex.decode(example['input']));
-          var output = aes.decrypt(input);
+          var output = ecb.decrypt(input);
 
           test('Decryption $i', () {
             expect(hex.encode(output), example['output']);
@@ -203,9 +182,10 @@ main() {
 
           var key = Key(Uint8List.fromList(hex.decode(example['key'])));
           var aes = AES(key);
+          var ecb = ECB(aes);
 
           var input = Uint8List.fromList(hex.decode(example['input']));
-          var output = aes.encrypt(input);
+          var output = ecb.encrypt(input);
 
           test('Encryption $i', () {
             expect(hex.encode(output), example['output']);
@@ -219,15 +199,55 @@ main() {
 
           var key = Key(Uint8List.fromList(hex.decode(example['key'])));
           var aes = AES(key);
+          var ecb = ECB(aes);
 
           var input = Uint8List.fromList(hex.decode(example['input']));
-          var output = aes.decrypt(input);
+          var output = ecb.decrypt(input);
 
           test('Decryption $i', () {
             expect(hex.encode(output), example['output']);
           });
         }
       });
+    });
+  });
+
+  // Multiblock message test for ECB. The test is specified in the same
+  // document as the previous test and test vectors can be acquired.
+  // at the same URL as the previous test.
+  group('AES ECB multiblock message', () {
+    group('Encryption', () {
+      for (int i = 0; i < encryption_multiblock_message_ecb.length; ++i) {
+        var example = encryption_multiblock_message_ecb[i];
+
+        var key = Key(Uint8List.fromList(hex.decode(example['key'])));
+        var aes = AES(key);
+        var ecb = ECB(aes);
+
+        var input = Uint8List.fromList(hex.decode(example['input']));
+        var output = ecb.encrypt(input);
+
+        test('Encryption $i', () {
+          expect(hex.encode(output), example['output']);
+        });
+      }
+    });
+
+    group('Decryption', () {
+      for (int i = 0; i < decryption_multiblock_message_ecb.length; ++i) {
+        var example = decryption_multiblock_message_ecb[i];
+
+        var key = Key(Uint8List.fromList(hex.decode(example['key'])));
+        var aes = AES(key);
+        var ecb = ECB(aes);
+
+        var input = Uint8List.fromList(hex.decode(example['input']));
+        var output = ecb.decrypt(input);
+
+        test('Decryption $i', () {
+          expect(hex.encode(output), example['output']);
+        });
+      }
     });
   });
 }
