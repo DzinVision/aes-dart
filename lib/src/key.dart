@@ -29,7 +29,7 @@ class KeyRoundException implements Exception {
 /// Key object is constructed form single 128 bit key
 /// on which key expansion is performed to generate a key schedule use by AES 128.
 ///
-/// Example of creating an AES key from list of zeros.
+/// The following example shows how to create an AES key from list of zeros.
 /// ```dart
 /// var key = Key(Uint8List(16));
 /// ```

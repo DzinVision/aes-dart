@@ -224,8 +224,12 @@ abstract class BlockCipher {
 /// Object is constructed with a 16 byte long key used for encryption and
 /// decryption. After initializing the object with a key, you can call
 /// its encrypt and decrypt methods to encrypt or decrypt a single
-/// 16 byte long block of data.
+/// 16 byte long block of data. AES should be used with [CBC] (or [ECB])
+/// block cipher mode to encrypt or decrypt multiple blocks of data.
 ///
+/// The following example shows how AES is used to encrypt and decrypt
+/// a single block of data. The example uses a key of zeros. Encrypted block
+/// is also block of zeros.
 /// ```dart
 /// // Initialize key and aes object.
 /// var key = Key(Uint8List(16));

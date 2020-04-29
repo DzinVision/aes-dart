@@ -29,6 +29,9 @@ class BlockCipherModeIVLengthException implements Exception {
 }
 
 /// Abstract class representing a block cipher mode (for instance ECB or CBC).
+///
+/// Block cipher mode is used with [BlockCipher] to encrypt multiple blocks of
+/// data.
 abstract class BlockCipherMode {
   /// Encrypts multiple blocks of plain text data in [input] and returns ciphered data.
   ///
@@ -44,9 +47,9 @@ abstract class BlockCipherMode {
 /// Implementation of ECB block cipher mode.
 ///
 /// ECB block mode is the least secure of all and should not be used.
-/// It encrypts each block individually.
+/// You should use [CBC] instead of ECB, unless you have a very specific reason.
 ///
-/// The following example uses ECB with AES to encrypt 64 bytes long
+/// The following example uses ECB with [AES] to encrypt 64 bytes long
 /// list of zeros with key of zeros.
 /// ```dart
 /// // Initialize key, aes and ecb objects.
@@ -67,7 +70,7 @@ class ECB implements BlockCipherMode {
 
   /// Encrypts [input] using provided [_cipher] and returns ciphered data.
   ///
-  /// [input] must be a multiple of [_cipher.block_size] long.
+  /// [input] must be a multiple of cipher's block size long.
   /// Returned list is the same length as the input.
   /// Throws [BlockCipherModeInputLengthException] if [input] is not of correct length.
   @override
@@ -100,7 +103,7 @@ class ECB implements BlockCipherMode {
 
   /// Decrypts [input] using provided [_cipher] and returns plain text data.
   ///
-  /// [input] must be a multiple of [_cipher.block_size] long.
+  /// [input] must be a multiple of cipher's block size long.
   /// Returned list is the same length as the input.
   /// Throws [BlockCipherModeInputLengthException] if [input] is not of correct length.
   @override
@@ -134,9 +137,14 @@ class ECB implements BlockCipherMode {
 
 /// Implementation of CBC block cipher mode.
 ///
-/// CBC is more secure than ECB, therefore CBC should be used.
+/// CBC is more secure than [ECB], therefore CBC should be used.
+/// CBC is initialized with a block cipher and an initialization vector (IV).
+/// IV should be different each time data is encrypted. IV should be (crypto secure)
+/// random 16 bytes of data. For decryption the same IV needs to be used as
+/// for encryption, therefore you should send IV along with the ciphered message
+/// to the receiver.
 ///
-/// The following example uses CBC with AES to encrypt 64 bytes long
+/// The following example uses CBC with [AES] to encrypt 64 bytes long
 /// list of zeros with key of zeros.
 /// ```dart
 /// // Initialize key, aes and cbc objects.
@@ -166,7 +174,7 @@ class CBC implements BlockCipherMode {
 
   /// Encrypts [input] using provided [_cipher] and returns ciphered data.
   ///
-  /// [input] must be a multiple of [_cipher.block_size] long.
+  /// [input] must be a multiple of cipher's block size long.
   /// Returned list is the same length as the input.
   /// Throws [BlockCipherModeInputLengthException] if [input] is not of correct length.
   @override
@@ -212,7 +220,7 @@ class CBC implements BlockCipherMode {
 
   /// Decrypts [input] using provided [_cipher] and returns plain text data.
   ///
-  /// [input] must be a multiple of [_cipher.block_size] long.
+  /// [input] must be a multiple of cipher's block size long.
   /// Returned list is the same length as the input.
   /// Throws [BlockCipherModeInputLengthException] if [input] is not of correct length.
   @override
