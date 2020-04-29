@@ -1,6 +1,6 @@
 name: aes
 version: 0.1.0
-description: Library for AES-128 in CBC mode.
+description: Library for AES-128.
 
 environment:
     sdk: '>=2.7.0 <3.0.0'
