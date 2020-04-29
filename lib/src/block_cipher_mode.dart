@@ -133,6 +133,23 @@ class ECB implements BlockCipherMode {
   }
 }
 
+/// Implementation of CBC block cipher mode.
+///
+/// CBC is more secure than ECB, therefore CBC should be used.
+///
+/// The following example uses CBC with AES to encrypt 64 bytes long
+/// list of zeros with key of zeros.
+/// ```dart
+/// // Initialize key, aes and cbc objects.
+/// var key = Key(Uint8List(16));
+/// var aes = AES(key);
+/// var cbc = CBC(aes);
+///
+/// // Encrypt data and decrypt encrypted data.
+/// var data = Uint8List(64);
+/// var encrypted = cbc.encrypt(data);
+/// var decrypted = cbc.decrypt(encrypted);
+/// ```
 class CBC implements BlockCipherMode {
   final BlockCipher _cipher;
   final Uint8List _IV;
@@ -148,6 +165,11 @@ class CBC implements BlockCipherMode {
     }
   }
 
+  /// Encrypts [input] using provided [_cipher] and returns ciphered data.
+  ///
+  /// [input] must be a multiple of [_cipher.block_size] long.
+  /// Returned list is the same length as the input.
+  /// Throws [BlockCipherModeInputLengthException] if [input] is not of correct length.
   @override
   Uint8List encrypt(Uint8List input) {
     // Check that the input is of correct length.
@@ -161,18 +183,26 @@ class CBC implements BlockCipherMode {
     // Initialize output list.
     var out = Uint8List(input.length);
 
+    // Remember previous ciphered block, to use with XOR.
+    // For the first block IV is used.
     Uint8List prev_c = _IV;
 
+    // Encrypt each block.
     for (int block = 0; block < num_of_blocks; ++block) {
+      // Get a single block of data.
       var data = input.sublist(
           block * _cipher.block_size, (block + 1) * _cipher.block_size);
 
+      // XOR data with previous ciphered block.
       for (int i = 0; i < _cipher.block_size; ++i) {
         data[i] ^= prev_c[i];
       }
 
+      // Encrypt XOR-ed data and store it in prev_c, so that
+      // it can be used for XOR-ing the next block.
       prev_c = _cipher.encrypt(data);
 
+      // Copy encrypted bytes to out.
       for (int i = 0; i < _cipher.block_size; ++i) {
         out[block * _cipher.block_size + i] = prev_c[i];
       }
@@ -181,6 +211,11 @@ class CBC implements BlockCipherMode {
     return out;
   }
 
+  /// Decrypts [input] using provided [_cipher] and returns plain text data.
+  ///
+  /// [input] must be a multiple of [_cipher.block_size] long.
+  /// Returned list is the same length as the input.
+  /// Throws [BlockCipherModeInputLengthException] if [input] is not of correct length.
   @override
   Uint8List decrypt(Uint8List input) {
     // Check that the input is of correct length.
@@ -194,18 +229,26 @@ class CBC implements BlockCipherMode {
     // Initialize output list.
     var out = Uint8List(input.length);
 
+    // Remember previous ciphered block, to use with XOR.
+    // For the first block IV is used.
     Uint8List prev_c = _IV;
 
+    // Decrypt each block.
     for (int block = 0; block < num_of_blocks; ++block) {
+      // Get a single block of data.
       var data = input.sublist(
           block * _cipher.block_size, (block + 1) * _cipher.block_size);
 
+      // Decrypt the block.
       var decrypted = _cipher.decrypt(data);
 
+      // XOR decrypted block with previous ciphered block and
+      // save result to out.
       for (int i = 0; i < _cipher.block_size; ++i) {
         out[block * _cipher.block_size + i] = decrypted[i] ^ prev_c[i];
       }
 
+      // Remember previous ciphered block.
       prev_c = data;
     }
 
