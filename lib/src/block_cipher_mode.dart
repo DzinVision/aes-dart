@@ -3,7 +3,6 @@ import 'dart:typed_data';
 import 'package:aes/aes.dart';
 
 import 'aes.dart';
-import 'package:convert/convert.dart';
 
 /// Exception thrown when [BlockCipherMode] input was not of correct length;
 class BlockCipherModeInputLengthException implements Exception {
