@@ -88,7 +88,7 @@ class _State {
     int r = 0x00;
     int s = p;
 
-    while (q > 0) {
+    for (int i = 0; i < 8; ++i) {
       int b = q & 1;
       r = r ^ (b * s);
 
