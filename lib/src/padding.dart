@@ -28,13 +28,14 @@ class PKCS7 implements Padding {
   /// Adds padding to the input.
   ///
   /// Input is padded, so that it is a multiple of given block_size.
+  /// block_size should be given in number of bytes.
   /// Throws [PaddingInputLengthException] if input is not of correct length.
   @override
   Uint8List add_padding(Uint8List input, int block_size) {
     // Calculate number of blocks in padded text.
     int num_blocks = input.length ~/ block_size + 1;
     // Calculate number of bytes to be padded.
-    int to_add = input.length - num_blocks * block_size;
+    int to_add = num_blocks * block_size - input.length;
 
     // Copy current data to expanded list.
     var res = Uint8List(num_blocks * block_size);
